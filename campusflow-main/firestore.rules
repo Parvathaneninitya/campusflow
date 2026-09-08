@@ -1,0 +1,223 @@
+rules_version = '2';
+
+service cloud.firestore {
+
+  match /databases/{database}/documents {
+
+    /* ==========================================================
+       Helper Functions
+    ========================================================== */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function getUser() {
+      return get(
+        /databases/$(database)/documents/users/$(request.auth.uid)
+      );
+    }
+
+    function hasRole(role) {
+      return isSignedIn()
+        && getUser().data.role == role;
+    }
+
+    function isStudent() {
+      return hasRole("student");
+    }
+
+    function isFaculty() {
+      return hasRole("faculty");
+    }
+
+    function isClub() {
+      return hasRole("club");
+    }
+
+    function isAdmin() {
+      return hasRole("admin");
+    }
+
+    /* ==========================================================
+       USERS
+    ========================================================== */
+
+    match /users/{userId} {
+
+      allow read:
+      if isSignedIn() &&
+         (
+           isOwner(userId) ||
+           isAdmin()
+         );
+
+      allow create:
+      if isSignedIn();
+
+      allow update:
+      if isSignedIn() &&
+         (
+           isOwner(userId) ||
+           isAdmin()
+         );
+
+      allow delete:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       EVENTS
+    ========================================================== */
+
+    match /events/{eventId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow create:
+      if isClub() || isAdmin();
+
+      allow update:
+      if isClub() || isAdmin();
+
+      allow delete:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       EVENT REGISTRATIONS
+    ========================================================== */
+
+    match /eventRegistrations/{registrationId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow create:
+      if isStudent();
+
+      allow update:
+      if isStudent() ||
+         isClub() ||
+         isFaculty() ||
+         isAdmin();
+
+      allow delete:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       ATTENDANCE
+    ========================================================== */
+
+    match /attendance/{attendanceId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow create:
+      if isFaculty() ||
+         isAdmin();
+
+      allow update:
+      if isFaculty() ||
+         isAdmin();
+
+      allow delete:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       CERTIFICATES
+    ========================================================== */
+
+    match /certificates/{certificateId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow create:
+      if isClub() ||
+         isAdmin();
+
+      allow update:
+      if isClub() ||
+         isAdmin();
+
+      allow delete:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       NOTIFICATIONS
+    ========================================================== */
+
+    match /notifications/{notificationId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow create:
+      if isClub() ||
+         isFaculty() ||
+         isAdmin();
+
+      allow update:
+      if isSignedIn();
+
+      allow delete:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       CLUBS
+    ========================================================== */
+
+    match /clubs/{clubId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow write:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       DEPARTMENTS
+    ========================================================== */
+
+    match /departments/{departmentId} {
+
+      allow read:
+      if isSignedIn();
+
+      allow write:
+      if isAdmin();
+
+    }
+
+    /* ==========================================================
+       DEFAULT DENY
+    ========================================================== */
+
+    match /{document=**} {
+
+      allow read, write: if false;
+
+    }
+
+  }
+
+}

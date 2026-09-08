@@ -1,0 +1,137 @@
+rules_version = '2';
+
+service firebase.storage {
+
+  match /b/{bucket}/o {
+
+    /* ==========================================================
+       Helper Functions
+    ========================================================== */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUser() {
+      return firestore.get(
+        /databases/(default)/documents/users/$(request.auth.uid)
+      );
+    }
+
+    function hasRole(role) {
+      return isSignedIn() &&
+             getUser().data.role == role;
+    }
+
+    function isStudent() {
+      return hasRole("student");
+    }
+
+    function isFaculty() {
+      return hasRole("faculty");
+    }
+
+    function isClub() {
+      return hasRole("club");
+    }
+
+    function isAdmin() {
+      return hasRole("admin");
+    }
+
+    /* ==========================================================
+       Profile Photos
+       Path:
+       profilePhotos/{userId}/{fileName}
+    ========================================================== */
+
+    match /profilePhotos/{userId}/{fileName} {
+
+      allow read:
+        if isSignedIn();
+
+      allow write:
+        if isSignedIn() &&
+           request.auth.uid == userId &&
+           request.resource.size < 5 * 1024 * 1024 &&
+           request.resource.contentType.matches('image/.*');
+
+      allow delete:
+        if request.auth.uid == userId ||
+           isAdmin();
+    }
+
+    /* ==========================================================
+       Event Posters
+       Path:
+       eventPosters/{eventId}/{fileName}
+    ========================================================== */
+
+    match /eventPosters/{eventId}/{fileName} {
+
+      allow read:
+        if true;
+
+      allow write:
+        if isClub() || isAdmin();
+
+      allow delete:
+        if isClub() || isAdmin();
+    }
+
+    /* ==========================================================
+       Certificates
+       Path:
+       certificates/{studentId}/{fileName}
+    ========================================================== */
+
+    match /certificates/{studentId}/{fileName} {
+
+      allow read:
+        if isSignedIn() &&
+           (
+             request.auth.uid == studentId ||
+             isFaculty() ||
+             isClub() ||
+             isAdmin()
+           );
+
+      allow write:
+        if isClub() || isAdmin();
+
+      allow delete:
+        if isAdmin();
+    }
+
+    /* ==========================================================
+       Club Logos
+       Path:
+       clubLogos/{clubId}/{fileName}
+    ========================================================== */
+
+    match /clubLogos/{clubId}/{fileName} {
+
+      allow read:
+        if true;
+
+      allow write:
+        if isClub() || isAdmin();
+
+      allow delete:
+        if isAdmin();
+    }
+
+    /* ==========================================================
+       Default Deny
+    ========================================================== */
+
+    match /{allPaths=**} {
+
+      allow read, write:
+        if false;
+
+    }
+
+  }
+
+}

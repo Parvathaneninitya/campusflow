@@ -1,0 +1,66 @@
+.form-card {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  max-width: 800px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--text-dark);
+}
+
+.form-group input, 
+.form-group textarea, 
+.form-group select {
+  padding: 0.65rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.form-group input:focus, 
+.form-group textarea:focus, 
+.form-group select:focus {
+  border-color: var(--primary-blue);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.form-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-row .form-group {
+  flex: 1;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.checkbox-group label, .checkbox-single label {
+  font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+}
+
+.status-message {
+  margin-top: 1rem;
+  font-weight: 500;
+  color: var(--primary-blue);
+}
